@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>3D Coin Flip Animation</title>
+    <style>
+        @font-face {
+            font-family: 'Intro';
+            src: url('intro.otf') format('opentype');
+        }
+        body, html {
+            margin: 0;
+            overflow: hidden;
+            width: 100%;
+            height: 100%;
+            background-image: url('1212.png');
+            background-size: cover;
+            background-position: center;
+        }
+        .hidden {
+            display: none;
+        }
+        #container3D {
+            width: 100%;
+            height: 80%;
+        }
+        #flipButton {
+            outline: none;
+            border: none;
+            cursor: pointer;
+            display: block;
+            position: relative;
+            background: linear-gradient(270deg, #c33764, #1d2671, #c33764);
+            background-size: 600% 600%;
+            animation: AnimatedGradient 15s ease infinite;
+            font-size: 22px;
+            font-weight: 300;
+            color: white;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            padding: 50px 70px;
+            margin: 0 auto;
+            border-radius: 20px;
+            box-shadow: 0 6px #912f56;
+            top: -280px;
+        }
+
+        @keyframes AnimatedGradient {
+            0% {background-position: 0% 50%;}
+            50% {background-position: 100% 50%;}
+            100% {background-position: 0% 50%;}
+        }
+        #flipButton:hover {
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+            transform: translateY(-4px);
+            transition: all 0.3s ease;
+        }
+
+        #flipButton:active {
+            box-shadow: 0 5px 10px rgba(0,0,0,0.1);
+            transform: translateY(-2px);
+            transition: all 0.1s ease;
+        }
+        #resultText {
+            animation: fadeInScaleUp 0.5s ease-out forwards;
+            position: absolute;
+            top: 23%;
+            left: 30%;
+            transform: translateX(-50%);
+            font-size: 106px;
+            color: white;
+            display: none;
+            font-family: 'Intro';
+        }
+        @keyframes fadeInScaleUp {
+            0% {
+                opacity: 0;
+                transform: scale(0.8);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+        .marquee {
+            margin-right: 30px;
+            width: 100%;
+            overflow: hidden;
+            background: #1d2671;
+            line-height: 50px;
+            white-space: nowrap;
+            position: absolute;
+            z-index: 10;
+            font-family: 'Intro', sans-serif;
+        }
+
+        .marquee p {
+            display: inline-block;
+            padding-left: 100%;
+            animation: marquee 20s linear infinite;
+        }
+
+        .marquee span {
+            opacity: 0;
+            animation: bounceIn 0.5s infinite alternate;
+            display: inline-block;
+            font-size: 6vw;
+            color: white;
+            text-shadow: 0px 2px 4px rgba(0, 0, 0, 0.5);
+            animation-delay: calc(var(--n) * 0.1s); /* Delay based on the position of the letter */
+        }
+        .marquee .text-segment {
+            margin-right: 60px; /* Добавляем отступ справа между текстовыми блоками */
+            display: inline-block;
+            font-size: 6vw;
+            color: white;
+            text-shadow: 0px 2px 4px rgba(0, 0, 0, 0.5);
+            opacity: 1; /* Убедимся, что текст видим */
+        }
+
+        /* Keyframes for the text animations */
+        @keyframes bounceIn {
+            0%, 100% { transform: translateY(0); opacity: 1; }
+            50% { transform: translateY(-20px); opacity: 0.5; }
+        }
+
+        @keyframes marquee {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-100%); }
+        }
+
+
+    </style>
+</head>
+<body class="hidden">
+    <div class="marquee">
+        <p>
+            <span class="text-segment">N$GOCIO KAZIK</span>
+            <span class="text-segment">inst: @mines.rus</span>
+            <span class="text-segment">tg: @negociokazik</span>
+        </p>
+    </div>
+    <div id="container3D"></div>
+    <button id="flipButton">FLIP</button>
+    <div id="resultText"></div>
+
+    <script type="module">
+        import TWEEN from "https://cdn.skypack.dev/@tweenjs/tween.js";
+        import * as THREE from "https://cdn.skypack.dev/three@0.129.0/build/three.module.js";
+        import { OrbitControls } from "https://cdn.skypack.dev/three@0.129.0/examples/jsm/controls/OrbitControls.js";
+        import { GLTFLoader } from "https://cdn.skypack.dev/three@0.129.0/examples/jsm/loaders/GLTFLoader.js";
+
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.getElementById("container3D").appendChild(renderer.domElement);
+
+        // Очень сильный рассеянный свет для общей освещенности
+        scene.add(new THREE.AmbientLight(0xffffff, 1));  // Сильно увеличена интенсивность
+
+        // Функция для добавления направленного света с экстремальной интенсивностью
+        const addDirectionalLight = (x, y, z, intensity) => {
+          const light = new THREE.DirectionalLight(0xffffff, intensity);
+          light.position.set(x, y, z);
+          scene.add(light);
+        }
+
+        // Функция для добавления точечного света с экстремальной интенсивностью
+        const addPointLight = (x, y, z, intensity) => {
+          const light = new THREE.PointLight(0xffffff, intensity, 1200);
+          light.position.set(x, y, z);
+          scene.add(light);
+        }
+
+        // Добавляем направленные и точечные света с очень высокой интенсивностью
+        addDirectionalLight(75, 75, 75, 10);
+        addDirectionalLight(-75, 75, 75, 10);
+        addPointLight(0, 75, 25, 8);
+        addPointLight(0, -75, 25, 8);
+
+        const controls = new OrbitControls(camera, renderer.domElement);
+        camera.position.set(0, 0, 100);
+        controls.update();
+
+        let coin = null;
+        const loader = new GLTFLoader();
+        loader.load('scene.gltf', function (gltf) {
+            coin = gltf.scene;
+            coin.scale.set(15, 15, 15);
+            coin.position.y = 13;
+            scene.add(coin);
+            document.body.classList.remove('hidden');
+            animate();
+        }, undefined, function (error) {
+            console.error("An error occurred while loading the model", error);
+        });
+
+        let spinning = true;
+
+        function animate() {
+            requestAnimationFrame(animate);
+            if (spinning && coin) {
+                coin.rotation.y += 0.03;
+            }
+            TWEEN.update();
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+        const flipSound = new Audio('flip.mp3'); // Path to your sound file
+
+        document.getElementById("flipButton").addEventListener("click", () => {
+            if (coin) {
+                document.getElementById("resultText").style.display = 'none';
+                spinning = false;
+                coin.rotation.set(0, 0, 0);
+
+                const upAndDownTween = new TWEEN.Tween(coin.position)
+                    .to({ y: [50, 13] }, 2000)
+                    .easing(TWEEN.Easing.Quadratic.InOut);
+
+                const rotationTween = new TWEEN.Tween(coin.rotation)
+                    .to({ y: coin.rotation.y + Math.PI * 10 }, 2000)
+                    .easing(TWEEN.Easing.Quadratic.InOut)
+                    .onComplete(() => {
+                        const result = Math.random() < 0.5 ? "Head" : "Tail";
+                        const resultText = document.getElementById("resultText");
+                        resultText.textContent = result;
+                        resultText.style.display = 'block';
+                        resultText.style.left = result === "Head" ? '35%' : '37%'; // Adjusted for dynamic placement
+                        resultText.classList.add("fadeInScaleUp");
+                    });
+
+                // Delay sound playback by 1 second
+                setTimeout(() => {
+                    flipSound.play();
+                }, 800);
+
+                upAndDownTween.start();
+                rotationTween.start();
+            }
+        });
+    });
+
+        window.addEventListener("resize", function () {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html> """
